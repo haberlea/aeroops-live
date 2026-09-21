@@ -1,5 +1,7 @@
 # AeroOps Live
 
+[![CI](https://github.com/haberlea/aeroops-live/actions/workflows/ci.yml/badge.svg)](https://github.com/haberlea/aeroops-live/actions/workflows/ci.yml)
+
 A flight operations control dashboard for **Sofia International Airport (SOF)**. AeroOps Live presents a live departures/arrivals board, per-flight delay-risk scoring, and an aggregated operational intelligence view — all driven by a **deterministic in-browser simulation**. No backend, no API keys, no network calls.
 
 > ⚠️ Demonstration software running on local mock data. Not for operational use.
