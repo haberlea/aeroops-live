@@ -1,32 +1,90 @@
-# React + TypeScript + Vite
+# AeroOps Live
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A flight operations control dashboard for **Sofia International Airport (SOF)**. AeroOps Live presents a live departures/arrivals board, per-flight delay-risk scoring, and an aggregated operational intelligence view — all driven by a **deterministic in-browser simulation**. No backend, no API keys, no network calls.
 
-Currently, two official plugins are available:
+> ⚠️ Demonstration software running on local mock data. Not for operational use.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **Live flight board** — departures and arrivals for SOF with status lifecycle (On Time → Gate Open → Boarding → Final Call → Departed, and En Route → Landed), gates, terminals, and estimated times. Rows flash as they update.
+- **Delay-risk scoring** — every flight gets a 0–100 risk score (Low / Medium / High) blending weather, terminal congestion, aircraft turnaround pressure, and delay already incurred, plus a predicted final delay.
+- **Operational intelligence** — at-risk flight count, average predicted delay, most-affected terminal, a delay-reason breakdown, and a 5-hour congestion forecast anchored to the operational window.
+- **Deterministic simulation** — a seeded PRNG (mulberry32) drives weather drift, lifecycle progression, and delays, so the demo replays identically on every load. Occasional simulated "Offline"/"Synchronizing" states model a real feed.
+- **Controller actions** — inspect a flight in a detail drawer, notify ops, and reassign gates.
+- **Filtering & persistence** — search and filter by status/terminal; view state (direction, filters, pause) survives reloads via `localStorage`.
+- **Accessible by design** — status is never conveyed by color alone; every badge carries a glyph and label.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech stack
 
-## Expanding the Oxlint configuration
+- **React 19** + **TypeScript**
+- **Vite 8** (dev/build) with **Tailwind CSS 4**
+- **Vitest** + Testing Library (unit tests)
+- **Oxlint** (linting)
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Getting started
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Requires Node.js 20+.
+
+```bash
+npm install      # install dependencies
+npm run dev      # start the dev server on http://localhost:5199
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+> The dev server is pinned to port **5199** to avoid colliding with the `air-flights` project on the default 5173.
+
+### Build & preview
+
+```bash
+npm run build    # type-check (tsc -b) and build to dist/
+npm run preview  # serve the production build locally
+```
+
+## Testing
+
+The test suite focuses on the pure simulation and analytics logic — the deterministic core that the UI renders.
+
+```bash
+npm test             # run the suite once
+npm run test:watch   # watch mode
+npm run test:coverage
+```
+
+Covered modules:
+
+| Area | Module | What's tested |
+| --- | --- | --- |
+| PRNG | `src/sim/rng.ts` | determinism, bounds, weighted distribution |
+| Engine | `src/sim/engine.ts` | clock math, weather bands, step determinism & invariants |
+| Risk | `src/utils/risk.ts` | congestion context, scoring, risk levels |
+| Intelligence | `src/utils/intelligence.ts` | at-risk aggregation, reason breakdown, forecast |
+| Enrichment | `src/data/enrich.ts` | deterministic per-flight detail, board invariants |
+| Time | `src/utils/time.ts` | zoned formatting |
+| Hooks | `src/hooks/usePersistentState.ts` | storage hydration & persistence |
+
+## Project structure
+
+```
+src/
+├── App.tsx              # top-level layout: board, intelligence, drawer
+├── components/          # presentational UI (table, cards, charts, badges, drawer…)
+├── hooks/
+│   ├── useSimulation.ts     # drives the update loop, connection state, clock
+│   └── usePersistentState.ts
+├── sim/
+│   ├── rng.ts               # seeded deterministic PRNG helpers
+│   └── engine.ts            # one deterministic simulation step (pure)
+├── data/
+│   ├── flights.ts           # authored SOF flight board (mock)
+│   └── enrich.ts            # deterministic operational enrichment
+├── utils/
+│   ├── risk.ts              # per-flight delay-risk model
+│   ├── intelligence.ts      # airport-wide aggregation & forecast
+│   ├── status.ts            # status → badge style/glyph
+│   └── time.ts              # zoned time formatting
+├── types.ts             # shared domain types
+└── test/                # test setup + fixtures
+```
+
+## How the simulation works
+
+All randomness flows through a single seeded PRNG (`SEED` in `useSimulation.ts`), so there is no wall-clock or network entropy — the same sequence of events replays on every load. Each refresh cycle advances the board one deterministic step (`simulateStep`), which drifts the weather, progresses flight lifecycles, and introduces or recovers delays. Risk and intelligence are derived from the whole board on every render.
