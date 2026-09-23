@@ -90,3 +90,16 @@ src/
 ## How the simulation works
 
 All randomness flows through a single seeded PRNG (`SEED` in `useSimulation.ts`), so there is no wall-clock or network entropy — the same sequence of events replays on every load. Each refresh cycle advances the board one deterministic step (`simulateStep`), which drifts the weather, progresses flight lifecycles, and introduces or recovers delays. Risk and intelligence are derived from the whole board on every render.
+
+## Documentation
+
+Full reference documentation lives in [`docs/`](./docs/README.md):
+
+| Document | Covers |
+| --- | --- |
+| [Architecture](./docs/architecture.md) | Layers, data flow, render pipeline, state ownership |
+| [Domain model](./docs/domain-model.md) | `types.ts` reference, the authored board, deterministic enrichment |
+| [Simulation](./docs/simulation.md) | Seeded PRNG, the engine step, the update loop, determinism guarantees |
+| [Risk & intelligence](./docs/risk-and-intelligence.md) | The delay-risk formula, thresholds, aggregation, forecast |
+| [UI reference](./docs/ui-reference.md) | Component catalogue, design tokens, accessibility, persisted state |
+| [Development](./docs/development.md) | Scripts, testing strategy, linting, CI, extending the app |
